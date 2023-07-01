@@ -1,0 +1,6 @@
+github.com/alphahorizonio/tinynet v0.0.0-20210118222949-4f531078f7e8 h1:tEvq7iqQ5+BDZr4JN+7Wv8GNLg5cCgYdpCXSTvndPE8=
+github.com/alphahorizonio/tinynet v0.0.0-20210118222949-4f531078f7e8/go.mod h1:0dKCYogxMb7VP7L/P2pauztI39BgzjQ/Y1QIkljNYi0=
+github.com/alphahorizonio/unisockets v0.1.1/go.mod h1:GHmI67/4EW9Jx+d1QiytJOHXnlI127uErrRgIHzwBB4=
+github.com/fastly/compute-sdk-go v0.1.5 h1:50jtlaeRYLsW0vHAQju2oAGzcPt3MXCHNnH67XFw/T0=
+github.com/fastly/compute-sdk-go v0.1.5/go.mod h1:FkuTq3OC+czAQOonII04YhiVjfBtMXOuv3hiHjXjHlE=
+github.com/valyala/fastjson v1.6.3/go.mod h1:CLCAqky6SMuOcxStkYQvblddUtoRxhYMGLrsQns1aXY=
