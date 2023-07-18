@@ -58,6 +58,12 @@ func main() {
 			payload = []byte("GET " + parsedTarget.Path + " HTTP/1.1\r\nHost: " + parsedTarget.Hostname() + "\r\nConnection: Keep-Alive\r\n\r\n")
 
 		}
+	case "PRI":
+		{
+			methods.TLSConfigD.ServerName = parsedTarget.Hostname() //SNI
+			payload = []byte("PRI * HTTP/2.0\r\n\r\n")
+
+		}
 	default:{
 		println("unsupported method")
 		return
